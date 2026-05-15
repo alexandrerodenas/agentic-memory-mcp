@@ -1,6 +1,6 @@
 [project]
 name = "agentic-memory-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Agentic Memory Management via MCP — Knowledge Graph for AI agents"
 readme = "README.md"
 authors = [
