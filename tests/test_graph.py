@@ -171,30 +171,30 @@ class TestKnowledgeGraph:
 
     # ── Search ─────────────────────────────────────────────────────────────────
 
-    def test_search_nodes(self, graph):
+    def test_search(self, graph):
         graph.add_node(Node(id="n1", label="Person", content="Alice lives in Paris"))
         graph.add_node(Node(id="n2", label="City", content="Paris is the capital of France"))
         graph.add_node(Node(id="n3", label="Person", content="Bob lives in London"))
-        results = graph.search_nodes("Paris")
+        results = graph.search("Paris")
         assert len(results) == 2
         ids = {r.id for r in results}
         assert ids == {"n1", "n2"}
 
-    def test_search_nodes_empty(self, graph):
-        assert graph.search_nodes("nowhere") == []
+    def test_search_empty(self, graph):
+        assert graph.search("nowhere") == []
 
-    def test_search_nodes_by_label(self, graph):
+    def test_search_by_label(self, graph):
         graph.add_node(Node(id="n1", label="Person", content="Alice"))
         graph.add_node(Node(id="n2", label="Place", content="Paris"))
-        results = graph.search_nodes(label="Person")
+        results = graph.search(label="Person")
         assert len(results) == 1
         assert results[0].id == "n1"
 
-    def test_search_nodes_combined(self, graph):
+    def test_search_combined(self, graph):
         graph.add_node(Node(id="n1", label="Person", content="Alice in Paris"))
         graph.add_node(Node(id="n2", label="Person", content="Alice in London"))
         graph.add_node(Node(id="n3", label="City", content="Paris"))
-        results = graph.search_nodes(query="Alice", label="Person")
+        results = graph.search(query="Alice", label="Person")
         assert len(results) == 2
 
     # ── Persistence ────────────────────────────────────────────────────────────

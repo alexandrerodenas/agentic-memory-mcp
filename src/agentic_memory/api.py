@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Literal
 
 from agentic_memory.core.graph import KnowledgeGraph, Node, Edge
 from agentic_memory.core.score import ScoreStore
@@ -64,15 +63,11 @@ class MemorySkills:
 
     def retrieve(self, query: str = "", label: str = "", limit: int = 10) -> list[tuple[Node, float]]:
         """Return top-N nodes ranked by score, optionally filtered by text query."""
-        # Text search first, then score ranking
-        if query or label:
-            candidates = self.graph.search_nodes(query=query, label=label, limit=1000)
-            for n in candidates:
-                self.scores.get(n.id).bump_read()
-            self._persist_scores()
-            scored = [(n.id, self.scores.get(n.id).score()) for n in candidates]
-        else:
-            scored = [(nid, self.scores.get(nid).score()) for nid in self.graph._nodes()]
+        candidates = self.graph.search(query=query, label=label, limit=1000)
+        for n in candidates:
+            self.scores.get(n.id).bump_read()
+        self._persist_scores()
+        scored = [(n.id, self.scores.get(n.id).score()) for n in candidates]
         scored.sort(key=lambda x: x[1], reverse=True)
         top = scored[:limit]
         return [(self.graph.get_node(nid), score) for nid, score in top if self.graph.get_node(nid)]

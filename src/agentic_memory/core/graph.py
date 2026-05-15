@@ -158,12 +158,13 @@ class KnowledgeGraph:
         with self._lock:
             return list(self._store.edges.values())
 
-    def search_nodes(
+    def search(
         self,
         query: str = "",
         label: str = "",
         limit: int = 50,
     ) -> list[Node]:
+        """Internal: full-text filter without scoring. Used by retrieve()."""
         with self._lock:
             results = list(self._store.nodes.values())
             if label:
