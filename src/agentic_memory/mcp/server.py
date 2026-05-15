@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -240,14 +242,58 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
 
-def run():
+# ── Auto-prune config from env ───────────────────────────────────────────────
+
+_MEM_AUTO_PRUNE_ENABLED = os.getenv("MEMORY_AUTO_PRUNE_ENABLED", "0") in ("1", "true", "True")
+_MEM_AUTO_PRUNE_MAX_NODES = int(os.getenv("MEMORY_AUTO_PRUNE_MAX_NODES", "0") or "0") or None
+_MEM_AUTO_PRUNE_MAX_SIZE_MB = float(os.getenv("MEMORY_AUTO_PRUNE_MAX_SIZE_MB", "0") or "0") or None
+_MEM_AUTO_PRUNE_INTERVAL_SECONDS = int(os.getenv("MEMORY_AUTO_PRUNE_INTERVAL_SECONDS", "3600"))
+
+
+async def _auto_prune_loop(app_instance: Server) -> None:
+    """Background loop: auto-prune at configured interval."""
+    import asyncio
+
+    logger = logging.getLogger(__name__)
+    pruner = AutoPruner(max_nodes=_MEM_AUTO_PRUNE_MAX_NODES, max_size_mb=_MEM_AUTO_PRUNE_MAX_SIZE_MB)
+
+    while True:
+        await asyncio.sleep(_MEM_AUTO_PRUNE_INTERVAL_SECONDS)
+        try:
+            g = _graph()
+            removed = pruner.auto_prune(g)
+            if removed:
+                logger.info("Auto-pruned %d nodes: %s", len(removed), removed)
+        except Exception as e:
+            logger.warning("Auto-prune failed: %s", e)
+
+
+def run() -> None:
     """Entry point for the MCP server."""
     import asyncio
     from mcp.server.stdio import stdio_server
 
-    async def main():
+    async def main() -> None:
+        tasks: list[asyncio.Task] = []
+        if _MEM_AUTO_PRUNE_ENABLED:
+            tasks.append(asyncio.create_task(_auto_prune_loop(app)))
+
         async with stdio_server() as (read_stream, write_stream):
-            await app.run(read_stream, write_stream, app.create_initialization_options())
+            options = app.create_initialization_options()
+            server_task = asyncio.create_task(app.run(read_stream, write_stream, options))
+
+            async def cancel_all() -> None:
+                for t in tasks:
+                    t.cancel()
+                server_task.cancel()
+
+            # Run until shutdown
+            try:
+                await server_task
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                pass
+            finally:
+                await cancel_all()
 
     asyncio.run(main())
 

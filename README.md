@@ -116,19 +116,27 @@ score = (3 × corroborations) + (1 × read_count) + (0.5 × recency_bonus)
 
 This ensures the most relevant, most frequently accessed, and most corroborated memories bubble up to the top during retrieval, keeping LLM context windows tight.
 
-## Auto-Pruning
+### Auto-Pruning
 
-```python
-from agentic_memory.core.prune import AutoPruner
+Auto-prune runs as a background scheduler inside the MCP server process, controlled entirely via environment variables:
 
-pruner = AutoPruner(max_nodes=1000, max_size_mb=10.0)
-removed = pruner.auto_prune(graph)
+```bash
+# Activate auto-prune: max 1000 nodes, prune when file > 5 MB, every 30 min
+MEMORY_AUTO_PRUNE_ENABLED=1 \
+MEMORY_AUTO_PRUNE_MAX_NODES=1000 \
+MEMORY_AUTO_PRUNE_MAX_SIZE_MB=5 \
+MEMORY_AUTO_PRUNE_INTERVAL_SECONDS=1800 \
+  memory-mcp
 ```
 
-Triggers:
-- **Max nodes** — prune oldest entries when graph exceeds the limit
-- **Max size (MB)** — prune when the JSON file exceeds the limit
-- **Manual** — via CLI or `memory_prune` MCP tool
+| Variable | Default | Description |
+|---|---|---|
+| `MEMORY_AUTO_PRUNE_ENABLED` | `0` | Set to `1` to enable the background scheduler |
+| `MEMORY_AUTO_PRUNE_MAX_NODES` | `None` | Max nodes before pruning |
+| `MEMORY_AUTO_PRUNE_MAX_SIZE_MB` | `None` | Max file size (MB) before pruning |
+| `MEMORY_AUTO_PRUNE_INTERVAL_SECONDS` | `3600` | Seconds between auto-prune runs |
+
+Manual prune is also available via CLI or `memory_prune` tool.
 
 ## Configuration
 
