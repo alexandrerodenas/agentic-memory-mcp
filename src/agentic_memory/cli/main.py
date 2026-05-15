@@ -227,5 +227,19 @@ def prune(ctx, max_nodes, strategy):
     console.print(f"[yellow]Removed {len(removed)} nodes: {removed}[/yellow]")
 
 
+@cli.command("retrieve")
+@click.option("--limit", default=10, type=int, help="Max results")
+@click.option("--label", default="", help="Filter by label")
+@click.pass_context
+def retrieve(ctx, limit, label):
+    """Retrieve top-N most relevant memories by score."""
+    skills = MemorySkills(graph_path=ctx.obj["graph_path"])
+    text = skills.retrieve_text(limit=limit, label=label)
+    if not text:
+        console.print("[yellow]No memories found[/yellow]")
+        return
+    console.print(text)
+
+
 if __name__ == "__main__":
     cli()

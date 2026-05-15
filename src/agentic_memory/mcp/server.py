@@ -11,6 +11,7 @@ from mcp.types import Tool, TextContent
 from agentic_memory.core.graph import KnowledgeGraph, Node, Edge
 from agentic_memory.core.score import ScoreStore
 from agentic_memory.core.prune import AutoPruner
+from agentic_memory.api import MemorySkills
 
 
 # ── Server setup ───────────────────────────────────────────────────────────────
