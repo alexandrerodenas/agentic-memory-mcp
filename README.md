@@ -20,9 +20,8 @@ agentic_memory/
 │   └── server.py     # MCP server (stdio transport)
 ├── cli/
 │   └── main.py       # Click CLI (memory-cli command)
-├── skills/
-│   └── memory.py     # MemorySkills — decoupled Python API
-└── hermes.py         # Hermes Agent plugin integration
+├── api.py            # MemorySkills — Python API (standalone use)
+└── hermes/           # Hermes Agent plugin integration
 ```
 
 **Persistence:** JSON files (`memory_graph.json`, `memory_scores.json`) — no external database required.
@@ -58,26 +57,6 @@ memory-cli --graph memory.json stats
 
 # Prune old entries
 memory-cli --graph memory.json prune --max-nodes 500 --strategy oldest
-```
-
-### Python Skills (no server needed)
-
-```python
-from agentic_memory.skills.memory import MemorySkills
-
-mem = MemorySkills(graph_path="memory.json", scores_path="scores.json")
-
-# Store knowledge
-mem.add("alice", "Alice works at Acme Corp", label="Person")
-
-# Search
-results = mem.search(query="Acme", label="Person")
-
-# Token-optimized retrieval (top-N by score)
-context = mem.retrieve_text(limit=10)
-
-# Reinforce a memory
-mem.corroborate("alice", count=1)
 ```
 
 ### MCP Server
