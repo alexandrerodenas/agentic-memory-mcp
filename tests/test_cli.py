@@ -69,16 +69,17 @@ class TestCLI:
         g._load()
         assert g.get_node("d1") is None
 
-    def test_node_search(self, runner, tmp_path):
+    def test_retrieve_query_filter(self, runner, tmp_path):
         g = KnowledgeGraph(path=tmp_path)
         g.add_node(Node(id="s1", label="Place", content="Nantes"))
         g.add_node(Node(id="s2", label="Place", content="Paris"))
         result = runner.invoke(cli, [
             "--graph", str(tmp_path),
-            "node", "search", "Nantes",
+            "retrieve", "--query", "Nantes", "--limit", "10",
         ])
         assert result.exit_code == 0
         assert "s1" in result.output
+        assert "s2" not in result.output
 
     # ── Edge commands ──────────────────────────────────────────────────────────
 

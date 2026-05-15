@@ -22,14 +22,14 @@ Persistent memory with a scoring system. Stores facts, entities, and relationshi
 # Add a fact
 memory-cli node add --id alice --label Person --content "Alice works at Acme Corp"
 
-# Search
-memory-cli node search "Acme"
+# Retrieve (text filter + score ranking)
+memory-cli retrieve --query "Acme" --limit 10
+
+# Retrieve top-N by score only
+memory-cli retrieve --limit 10
 
 # Link two facts
 memory-cli edge add --id e1 --source alice --target acme --label works_at
-
-# Retrieve top-N most relevant memories (scored)
-memory-cli retrieve --limit 10
 
 # Prune old entries
 memory-cli prune --max-nodes 500 --strategy oldest
@@ -48,10 +48,11 @@ mem = MemorySkills(graph_path="memory.json")
 # Store
 mem.add("alice", "Alice works at Acme Corp", label="Person")
 
-# Search
-results = mem.search(query="Acme", label="Person")
+# Unified retrieval: text filter + score ranking
+entries = mem.retrieve(query="Acme", label="Person", limit=10)
+context = mem.retrieve_text(query="Acme", limit=10)
 
-# Token-optimized retrieval (top-N by score)
+# Token-optimized retrieval (top-N by score only)
 context = mem.retrieve_text(limit=10)
 
 # Reinforce (increases score)
@@ -75,7 +76,7 @@ memory-cli node list
 memory-cli node get <node_id>
 memory-cli node update <node_id> --content <new> --label <new>
 memory-cli node delete <node_id>
-memory-cli node search <query> [--label <label>]
+memory-cli retrieve --query <query> --limit <N> --label <label>
 ```
 
 ### Edge Operations
@@ -124,8 +125,7 @@ When running `memory-mcp` (stdio transport), agents can call:
 | `memory_node_update` | Update content/label/metadata |
 | `memory_node_delete` | Delete and cascade edges |
 | `memory_node_get` | Retrieve by ID (bump read score) |
-| `memory_search` | Full-text + label search |
-| `memory_retrieve` | Top-N token-optimized by score |
+| `memory_retrieve` | Top-N token-optimized by score (with optional text filter) |
 | `memory_edge_add` | Create a relationship |
 | `memory_corroborate` | Reinforce (bump score) |
 | `memory_prune` | Manual pruning |
@@ -155,4 +155,4 @@ from agentic_memory.hermes import setup
 setup(agent=your_hermes_instance)
 ```
 
-This exposes the memory system as a native Hermes skill with `add`, `get`, `search`, `retrieve`, `corroborate`, `delete`, `prune`, `stats` commands.
+This exposes the memory system as a native Hermes skill with `add`, `get`, `retrieve`, `corroborate`, `delete`, `prune`, `stats` commands.

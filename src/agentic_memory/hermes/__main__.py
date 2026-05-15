@@ -47,11 +47,8 @@ class _HermesMemorySkill:
     def get(self, node_id: str):
         return self.skills.get(node_id)
 
-    def search(self, query: str = "", label: str = "", limit: int = 50):
-        return self.skills.search(query, label, limit)
-
-    def retrieve(self, limit: int = 10, label: str = ""):
-        return self.skills.retrieve_text(limit, label)
+    def retrieve(self, query: str = "", label: str = "", limit: int = 10):
+        return self.skills.retrieve_text(query, label, limit)
 
     def corroborate(self, node_id: str, count: int = 1):
         return self.skills.corroborate(node_id, count)
@@ -95,19 +92,12 @@ def _register_hermes_commands(skills) -> None:
         else:
             console.print(f"[red]Not found: {node_id}[/red]")
 
-    @memory_group.command("search")
-    @click.argument("query")
-    @click.option("--label", default="", help="Filter by label")
-    def memory_search(query, label):
-        results = skills.search(query, label=label)
-        for n in results:
-            console.print(f"  [{n.label}] {n.id}: {n.content}")
-
     @memory_group.command("retrieve")
+    @click.option("--query", default="", help="Text to filter content")
     @click.option("--limit", default=10, type=int)
     @click.option("--label", default="", help="Filter by label")
-    def memory_retrieve(limit, label):
-        text = skills.retrieve_text(limit, label)
+    def memory_retrieve(query, limit, label):
+        text = skills.retrieve_text(query=query, limit=limit, label=label)
         console.print(text)
 
     @memory_group.command("corroborate")

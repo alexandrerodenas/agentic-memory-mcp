@@ -62,23 +62,24 @@ class MemorySkills:
             self._persist_scores()
         return node
 
-    def search(self, query: str = "", label: str = "", limit: int = 50) -> list[Node]:
-        results = self.graph.search_nodes(query=query, label=label, limit=limit)
-        for n in results:
-            self.scores.get(n.id).bump_read()
-        self._persist_scores()
-        return results
-
-    # ── Retrieval (token-optimized) ────────────────────────────────────────────
-
-    def retrieve(self, limit: int = 10, label: str = "") -> list[tuple[Node, float]]:
-        """Return top-N nodes with scores, best for LLM context injection."""
-        top = self.scores.top(self.graph, label=label, limit=limit)
+    def retrieve(self, query: str = "", label: str = "", limit: int = 10) -> list[tuple[Node, float]]:
+        """Return top-N nodes ranked by score, optionally filtered by text query."""
+        # Text search first, then score ranking
+        if query or label:
+            candidates = self.graph.search_nodes(query=query, label=label, limit=1000)
+            for n in candidates:
+                self.scores.get(n.id).bump_read()
+            self._persist_scores()
+            scored = [(n.id, self.scores.get(n.id).score()) for n in candidates]
+        else:
+            scored = [(nid, self.scores.get(nid).score()) for nid in self.graph._nodes()]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        top = scored[:limit]
         return [(self.graph.get_node(nid), score) for nid, score in top if self.graph.get_node(nid)]
 
-    def retrieve_text(self, limit: int = 10, label: str = "") -> str:
+    def retrieve_text(self, query: str = "", label: str = "", limit: int = 10) -> str:
         """Return retrieval results as a plain-text string."""
-        entries = self.retrieve(limit=limit, label=label)
+        entries = self.retrieve(query=query, label=label, limit=limit)
         if not entries:
             return "No relevant memories found."
         lines = [f"[{n.label}][score={s:.2f}] {n.id}: {n.content}" for n, s in entries]
@@ -142,16 +143,12 @@ def add(node_id: str, content: str, label: str = "", metadata: dict | None = Non
     return get_skills().add(node_id, content, label, metadata)
 
 
-def search(query: str = "", label: str = "", limit: int = 50) -> list[Node]:
-    return get_skills().search(query, label, limit)
+def retrieve(query: str = "", label: str = "", limit: int = 10) -> list[tuple[Node, float]]:
+    return get_skills().retrieve(query, label, limit)
 
 
-def retrieve(limit: int = 10, label: str = "") -> list[tuple[Node, float]]:
-    return get_skills().retrieve(limit, label)
-
-
-def retrieve_text(limit: int = 10, label: str = "") -> str:
-    return get_skills().retrieve_text(limit, label)
+def retrieve_text(query: str = "", label: str = "", limit: int = 10) -> str:
+    return get_skills().retrieve_text(query, label, limit)
 
 
 def corroborate(node_id: str, count: int = 1) -> None:

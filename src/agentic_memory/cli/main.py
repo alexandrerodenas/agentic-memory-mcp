@@ -11,6 +11,7 @@ from rich.table import Table
 
 from agentic_memory.core.graph import KnowledgeGraph, Node, Edge
 from agentic_memory.core.prune import AutoPruner
+from agentic_memory.api import MemorySkills
 
 
 console = Console()
@@ -121,30 +122,6 @@ def node_delete(ctx, node_id):
         sys.exit(1)
 
 
-@node.command("search")
-@click.argument("query", required=False)
-@click.option("--label", default="", help="Filter by label")
-@click.pass_context
-def node_search(ctx, query, label):
-    g = KnowledgeGraph(path=ctx.obj["graph_path"])
-    results = g.search_nodes(query or "", label or "")
-    if not results:
-        console.print("[yellow]No results found[/yellow]")
-        return
-    table = Table(title=f"Search results ({len(results)})")
-    table.add_column("ID")
-    table.add_column("Label")
-    table.add_column("Content")
-    for n in results:
-        table.add_row(n.id, n.label, n.content[:80])
-    console.print(table)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Edge commands
-# ══════════════════════════════════════════════════════════════════════════════
-
-
 @cli.group("edge")
 def edge():
     """Edge operations."""
@@ -228,13 +205,14 @@ def prune(ctx, max_nodes, strategy):
 
 
 @cli.command("retrieve")
+@click.option("--query", default="", help="Text to filter content")
 @click.option("--limit", default=10, type=int, help="Max results")
 @click.option("--label", default="", help="Filter by label")
 @click.pass_context
-def retrieve(ctx, limit, label):
-    """Retrieve top-N most relevant memories by score."""
+def retrieve(ctx, query, limit, label):
+    """Retrieve top-N most relevant memories by score (with optional text filter)."""
     skills = MemorySkills(graph_path=ctx.obj["graph_path"])
-    text = skills.retrieve_text(limit=limit, label=label)
+    text = skills.retrieve_text(query=query, limit=limit, label=label)
     if not text:
         console.print("[yellow]No memories found[/yellow]")
         return

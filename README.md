@@ -47,7 +47,7 @@ uv sync
 memory-cli --graph memory.json node add --id alice --label Person --content "Alice lives in Paris"
 
 # Search
-memory-cli --graph memory.json node search "Paris"
+memory-cli retrieve --query "Paris"
 
 # Link two entries
 memory-cli --graph memory.json edge add --id e1 --source alice --target paris --label lives_in
@@ -74,8 +74,7 @@ Then connect any MCP-compatible AI agent (Claude Code, OpenCode, etc.) to use th
 - `memory_node_update` — Update an entry
 - `memory_node_delete` — Delete an entry
 - `memory_node_get` — Retrieve by ID
-- `memory_search` — Full-text + label search
-- `memory_retrieve` — Token-optimized top-N retrieval by score
+- `memory_retrieve` — Token-optimized top-N retrieval by score (with optional text filter)
 - `memory_edge_add` — Create a relationship
 - `memory_corroborate` — Reinforce a memory (increases score)
 - `memory_prune` — Manual pruning
@@ -83,13 +82,13 @@ Then connect any MCP-compatible AI agent (Claude Code, OpenCode, etc.) to use th
 
 ### Hermes Agent Plugin
 
-```bash
+```
 # Install
 hermes plugin install agentic-memory-mcp
 
 # Use in Hermes
 /memory add alice "Alice works at Acme Corp"
-/memory search Acme
+/memory retrieve --query Acme --limit 10
 /memory retrieve --limit 10
 /memory corroborate alice
 /memory prune --max-nodes 500

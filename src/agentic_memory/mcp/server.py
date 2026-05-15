@@ -91,23 +91,12 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="memory_search",
-            description="Search memory for nodes matching a query and/or label.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "Text to search in content"},
-                    "label": {"type": "string", "description": "Filter by label"},
-                    "limit": {"type": "integer", "description": "Max results (default 10)", "default": 10},
-                },
-            },
-        ),
-        Tool(
             name="memory_retrieve",
             description="Retrieve top-N most relevant memories (token-optimized).",
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "query": {"type": "string", "description": "Text to filter content"},
                     "limit": {"type": "integer", "description": "Max memories to return", "default": 10},
                     "label": {"type": "string", "description": "Filter by label"},
                 },
@@ -204,31 +193,18 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         _save_scores(store)
         return [TextContent(type="text", text=str(node))]
 
-    elif name == "memory_search":
-        results = g.search_nodes(
-            query=arguments.get("query", ""),
-            label=arguments.get("label", ""),
-            limit=arguments.get("limit", 10),
-        )
-        if not results:
-            return [TextContent(type="text", text="No results")]
-        for n in results:
-            store.get(n.id).bump_read()
-        _save_scores(store)
-        lines = [f"[{n.label}] {n.id}: {n.content}" for n in results]
-        return [TextContent(type="text", text="\n".join(lines))]
-
     elif name == "memory_retrieve":
         limit = arguments.get("limit", 10)
         label = arguments.get("label", "")
-        top = store.top(g, label=label, limit=limit)
-        lines = []
-        for node_id, score_val in top:
-            node = g.get_node(node_id)
-            if node:
-                lines.append(f"[score={score_val:.2f}] [{node.label}] {node.id}: {node.content}")
-        if not lines:
+        query = arguments.get("query", "")
+        # Use unified retrieve: text filter + score ranking
+        skills = MemorySkills(graph_path=g.path)
+        skills._graph = g
+        skills._scores = store
+        entries = skills.retrieve(query=query, label=label, limit=limit)
+        if not entries:
             return [TextContent(type="text", text="No memories found")]
+        lines = [f"[score={s:.2f}] [{n.label}] {n.id}: {n.content}" for n, s in entries]
         return [TextContent(type="text", text="\n".join(lines))]
 
     elif name == "memory_edge_add":
