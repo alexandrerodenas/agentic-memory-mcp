@@ -23,7 +23,7 @@ def setup(agent=None) -> None:
     graph_path = os.getenv("MEMORY_GRAPH_PATH", "memory_graph.json")
     scores_path = os.getenv("MEMORY_SCORES_PATH", "memory_scores.json")
 
-    from agentic_memory.skills.memory import MemorySkills
+    from agentic_memory.api import MemorySkills
 
     skills = MemorySkills(graph_path=graph_path, scores_path=scores_path)
 

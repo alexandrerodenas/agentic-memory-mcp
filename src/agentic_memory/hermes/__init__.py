@@ -28,7 +28,7 @@ def _skills_instance():
     from agentic_memory.api import MemorySkills
 
     scores_path = os.getenv("MEMORY_SCORES_PATH", "memory_scores.json")
-    return MemorySkills(graph_path=str(_get_graph_dir() / "memory_graph.json"), scores_path=scores_path)
+    skills = MemorySkills(graph_path=str(_get_graph_dir() / "memory_graph.json"), scores_path=scores_path)
 
 
 # ─── Tool implementations ────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ def _node_add(args, task_id=None):
     import json
 
     skills = _skills_instance()
-    node = skills.add_node(
+    node = skills.add(
         content=args.get("content", ""),
         label=args.get("label", ""),
         metadata=args.get("metadata", {}),
@@ -69,7 +69,7 @@ def _node_get(args, task_id=None):
     import json
 
     skills = _skills_instance()
-    node = skills.get_node(args.get("node_id", ""))
+    node = skills.get(args.get("node_id", ""))
     if node is None:
         return json.dumps({"ok": False, "error": "Node not found"})
     return json.dumps({"ok": True, "node": node.model_dump()})
@@ -90,7 +90,7 @@ def _node_update(args, task_id=None):
     import json
 
     skills = _skills_instance()
-    node = skills.update_node(args.get("node_id", ""), content=args.get("content"), metadata=args.get("metadata"))
+    node = skills.update(args.get("node_id", ""), content=args.get("content"), metadata=args.get("metadata"))
     return json.dumps({"ok": True, "node_id": node.id if node else None})
 
 
@@ -113,7 +113,7 @@ def _node_delete(args, task_id=None):
     import json
 
     skills = _skills_instance()
-    removed = skills.delete_node(args.get("node_id", ""))
+    removed = skills.delete(args.get("node_id", ""))
     return json.dumps({"ok": removed})
 
 
