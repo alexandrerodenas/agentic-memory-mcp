@@ -1,11 +1,13 @@
 # plugin.yaml — Hermes Plugin Manifest for agentic-memory-mcp
 manifest_version: 1
 name: agentic-memory-mcp
-version: "0.3.0"
-description: Agentic Memory Management — Knowledge Graph for AI agents with MCP tools and CLI.
+version: "0.7.0"
+description: Knowledge Graph memory provider for Hermes Agent — persistent, scored, local.
 author: Alexandre Rodenas
 homepage: https://github.com/alexandrerodenas/agentic-memory-mcp
 requires_env: []
+
+provides_memory_provider: true
 
 provides_tools:
   - memory_node_add
@@ -15,6 +17,7 @@ provides_tools:
   - memory_edge_add
   - memory_edge_delete
   - memory_retrieve
+  - memory_corroborate
   - memory_stats
   - memory_export
   - memory_import
@@ -22,3 +25,6 @@ provides_tools:
 
 provides_skills:
   - agentic-memory
+
+hooks:
+  - on_memory_write
