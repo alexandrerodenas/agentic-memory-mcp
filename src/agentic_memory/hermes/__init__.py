@@ -27,7 +27,8 @@ def _graph_instance():
 def _skills_instance():
     from agentic_memory.api import MemorySkills
 
-    return MemorySkills(graph=_graph_instance())
+    scores_path = os.getenv("MEMORY_SCORES_PATH", "memory_scores.json")
+    return MemorySkills(graph_path=str(_get_graph_dir() / "memory_graph.json"), scores_path=scores_path)
 
 
 # ─── Tool implementations ────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ def _retrieve(args, task_id=None):
         label=args.get("label", ""),
         limit=int(args.get("limit", 10)),
     )
-    return json.dumps({"ok": True, "results": [n.model_dump() for n in results]})
+    return json.dumps({"ok": True, "results": results})
 
 
 _RETRIEVE_SCHEMA = {
